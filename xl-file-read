@@ -1,0 +1,92 @@
+step 1>
+
+add dependency in pom.xml
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>3.17</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>3.17</version>
+		</dependency>
+
+
+step 2>
+
+in controller 
+
+
+
+	@PostMapping(value = "/upload")
+    public ModelAndView uploadXL(@RequestParam("file") MultipartFile file) throws NotFoundException {
+    	System.out.println("inside xlsx file controller");
+    	
+        if (file.isEmpty())
+            throw new NotFoundException("Null file received!");
+        try {
+            
+        		
+            //Create Workbook instance holding reference to .xlsx file
+            XSSFWorkbook workbook = new XSSFWorkbook(file.getInputStream());
+            System.out.println(file.getInputStream());
+
+            //Get first/desired sheet from the workbook
+            XSSFSheet sheet = workbook.getSheetAt(0);
+
+
+            ArrayList<OrderDTO> orderList = new ArrayList<>();
+            //I've Header and I'm ignoring header for that I've +1 in loop
+
+            for (int row = sheet.getFirstRowNum() + 1; row <= sheet.getLastRowNum(); row++) {
+            	OrderDTO order = new OrderDTO();
+                Row ro = sheet.getRow(row);
+                for (int col = ro.getFirstCellNum(); col <= ro.getLastCellNum(); col++) {
+                    Cell ce = ro.getCell(col);
+            
+                    
+                    if (col == 0) {
+
+
+                        order.setSenderName(ce.getStringCellValue());
+                    }
+                    if (col == 1) {
+                        order.setSenderPhoneNo(String.valueOf(ce.getNumericCellValue()));
+                    }
+                    if (col == 2) {
+
+
+                        order.setPickUpArea(ce.getStringCellValue());
+                    }
+                    if (col == 3) {
+                        order.setPickupAddress(ce.getStringCellValue());
+                    }
+                    if (col == 4) {
+                        order.setReceiverName(ce.getStringCellValue());
+                    }
+ 		if (col == 5) {
+                        String data = null;
+
+                        if (ce.getCellTypeEnum() == CellType.STRING)
+                            data = ce.getStringCellValue();
+                        else if (ce.getCellTypeEnum() == CellType.NUMERIC)
+                            data = String.valueOf(ce.getNumericCellValue());
+                        medicine.setStrength(data);
+                    }
+
+                    
+                }
+                System.out.println("after binding order no"+row +" "+order);
+                orderList.add(order);
+            }
+       
+            workbook.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String redirectUrl = "/order/myorder";
+		return new ModelAndView("redirect:" + redirectUrl);
+    }
